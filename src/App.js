@@ -4,27 +4,20 @@ import Select from 'react-select';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSun, faMoon } from '@fortawesome/free-solid-svg-icons'
 
-const options = [
-  { value: 'Bucharest', label: 'Bucharest' },
-  { value: 'Bacau', label: 'Bacau' },
-  { value: 'Sighisoara', label: 'Sighisoara' },
-  { value: 'Sydney', label: 'Sydney' }
-];
-
-const URL = "https://api.weatherapi.com/v1/current.json";
-// const searchURL = "http://api.weatherapi.com/v1/search.json";
+const CURRENT_URL = "https://api.weatherapi.com/v1/current.json";
+const SEARCH_URL = "http://api.weatherapi.com/v1/search.json";
 const API_KEY = "34ddc8f39463427ba9d165646232502";
 
 function App() {
-  const [city, setCity] = useState(options[0]);
+  const [search, setSearch] = useState("");
+  const [cityList, setCityList] = useState([]);
+  const [city, setCity] = useState(null);
   const [cityData, setCityData] = useState(null);
-  // const [search, setSearch] = useState();
 
   useEffect(() => {
     const fetchData = async () => {
       const result = await axios.get(
-        URL
-        , {
+        CURRENT_URL, {
           params: {
             key: API_KEY,
             q: city.value
@@ -37,6 +30,33 @@ function App() {
     fetchData();
 
   }, [city]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const result = await axios.get(
+        SEARCH_URL
+        , {
+          params: {
+            key: API_KEY,
+            q: search
+          }
+        }
+      );
+
+      const parsedCityList = result.data.map((item) => ({ value: `${item.lat},${item.lon}`, label: `${item.name}, ${item.country}` }))
+
+      setCityList(parsedCityList);
+    }
+    fetchData();
+
+  }, [search]);
+
+  const handleSearch = (value) => {
+    if (value && value.length >= 3) {
+      setSearch(value);
+    }
+  }
+
 
   const renderWeather = () => {
     const {
@@ -68,7 +88,12 @@ function App() {
 
   return (
     <div className="App">
-      <Select options={options} defaultValue={city} onChange={(item) => setCity(item)} />
+      <Select
+        options={cityList}
+        onChange={(item) => setCity(item)}
+        onInputChange={handleSearch}
+        isClearable
+      />
       {cityData && renderWeather()}
     </div>
   );
