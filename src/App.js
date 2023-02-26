@@ -1,23 +1,75 @@
-import logo from './logo.svg';
-import './App.css';
+import { useState, useEffect } from "react";
+import axios from 'axios';
+import Select from 'react-select';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSun, faMoon } from '@fortawesome/free-solid-svg-icons'
+
+// const options = [
+//   { value: 'Bucharest', label: 'Bucharest' },
+//   { value: 'Bacau', label: 'Bacau' },
+//   { value: 'Sighisoara', label: 'Sighisoara' },
+//   { value: 'Sydney', label: 'Sydney' }
+// ];
+
+const currentURL = "https://api.weatherapi.com/v1/current.json";
+const searchURL = "http://api.weatherapi.com/v1/search.json";
+const API_KEY = "34ddc8f39463427ba9d165646232502";
 
 function App() {
+  const [city, setCity] = useState(options[0]);
+  const [cityData, setCityData] = useState(null);
+  const [search, setSearch] = useState();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const result = await axios.get(
+        URL
+        , {
+          params: {
+            key: API_KEY,
+            q: city.value
+          }
+        }
+      );
+
+      setCityData(result.data);
+    }
+    fetchData();
+
+  }, [city]);
+
+  const renderWeather = () => {
+    const {
+      location: { name, country }, 
+      current: {
+        temp_c, 
+        is_day, 
+        wind_kph, 
+        wind_dir, 
+        pressure_mb, 
+        humidity, 
+        condition: { icon }
+      } 
+    } = cityData;
+
+    return (
+      <div>
+        <h1>{`${name}, ${country}`}</h1>
+        <p>Temperature, Celsius: {temp_c}</p>
+        {is_day ? <FontAwesomeIcon icon={faSun} /> : <FontAwesomeIcon icon={faMoon} />}
+        <img src={icon} />
+        <p>Wind: {wind_kph}</p>
+        <p>Wind direction: {wind_dir}</p>
+        <p>Pressure: {pressure_mb}</p>
+        <p>Humidity: {humidity}</p>
+      </div>
+    )
+  };
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <Select options={options} defaultValue={city} onChange={(item) => setCity(item)} />
+      {cityData && renderWeather()}
     </div>
   );
 }
