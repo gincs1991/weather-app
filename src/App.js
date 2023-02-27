@@ -6,15 +6,18 @@ import { faSun, faMoon } from '@fortawesome/free-solid-svg-icons'
 
 const CURRENT_URL = "https://api.weatherapi.com/v1/current.json";
 const SEARCH_URL = "http://api.weatherapi.com/v1/search.json";
-const API_KEY = "34ddc8f39463427ba9d165646232502";
+const API_KEY = process.env.REACT_APP_API_KEY;
 
 function App() {
+  const [isSelectLoading, setIsSelectLoading] = useState(false);
   const [search, setSearch] = useState("");
+  const [isCityLoading, setIsCityLoading] = useState(false);
   const [cityList, setCityList] = useState([]);
   const [city, setCity] = useState(null);
   const [cityData, setCityData] = useState(null);
 
   useEffect(() => {
+    setIsCityLoading(true);
     const fetchData = async () => {
       const result = await axios.get(
         CURRENT_URL, {
@@ -26,28 +29,32 @@ function App() {
       );
 
       setCityData(result.data);
+      setIsCityLoading(false);
     }
     fetchData();
 
   }, [city]);
 
-  useEffect(() => {
+  useEffect(() => { 
     const fetchData = async () => {
       const result = await axios.get(
-        SEARCH_URL
-        , {
+        SEARCH_URL, {
           params: {
             key: API_KEY,
             q: search
           }
         }
       );
-
+      setIsSelectLoading(false);
       const parsedCityList = result.data.map((item) => ({ value: `${item.lat},${item.lon}`, label: `${item.name}, ${item.country}` }))
 
       setCityList(parsedCityList);
     }
-    fetchData();
+    if (search.length >= 3) {
+      setIsSelectLoading(true);
+      fetchData();
+    }
+    
 
   }, [search]);
 
@@ -72,7 +79,7 @@ function App() {
       } 
     } = cityData;
 
-    return (
+    return isCityLoading ?  <p>Loading....</p> : (
       <div>
         <h1>{`${name}, ${country}`}</h1>
         <p>Temperature, Celsius: {temp_c}</p>
@@ -93,6 +100,7 @@ function App() {
         onChange={(item) => setCity(item)}
         onInputChange={handleSearch}
         isClearable
+        isLoading={isSelectLoading}
       />
       {cityData && renderWeather()}
     </div>
